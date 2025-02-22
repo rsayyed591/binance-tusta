@@ -1,0 +1,44 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono&family=JetBrains+Mono&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.chart-container {
+  @apply relative bg-white overflow-hidden;
+  height: calc(100vh - 64px); /* Adjust based on header height */
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: calc(100vh - 96px); /* Adjust for smaller screens */
+  }
+}
+
+.chart-title {
+  @apply text-xl md:text-2xl font-bold text-center mb-2 md:mb-4 font-inter;
+}
+
+.chart-value {
+  @apply font-space-mono text-xs md:text-sm text-chart-text;
+}
+
+.trading-value {
+  @apply font-jetbrains text-xs md:text-sm;
+}
+
+.trendline {
+  stroke: theme("colors.trendline.line");
+  stroke-width: 2;
+  fill: none;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.trendline-handle {
+  fill: theme("colors.trendline.handle");
+  stroke: white;
+  stroke-width: 2;
+  cursor: move;
+}
+
