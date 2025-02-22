@@ -2,11 +2,11 @@ import axios from "axios"
 
 export const fetchBinanceData = async () => {
   try {
-    const response = await axios.get("https://api.binance.com/api/v3/klines", {
+    const response = await axios.get(`${import.meta.env.VITE_BINANCE_API_URL}/api/v3/klines`, {
       params: {
-        symbol: "BTCUSDT",
-        interval: "1m",
-        limit: 60,
+      symbol: "BTCUSDT",
+      interval: "1m",
+      limit: 60,
       },
     })
     console.log("Binance data:", response.data)
