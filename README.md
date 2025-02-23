@@ -11,6 +11,9 @@ rsayyed591-binance-tusta/
 │   └── requirement.txt
 └── frontend/
     ├── public/                  # Screenshots & assets
+    │   ├── home.png
+    │   ├── modal.png
+    │   └── backend-response.png
     ├── src/
     │   ├── App.jsx
     │   ├── index.css
@@ -73,6 +76,16 @@ rsayyed591-binance-tusta/
 🔗 **[binance-tusta.vercel.app](https://binance-tusta.vercel.app/)**  
 
 ## 🖼️ Screenshots  
-- 📌 **Main Chart Page** (`./frontend/public/home.png`)  
-- 📌 **Modal with Alert Configurations** (`./frontend/public/modal.png`)  
-- 📌 **Flask Backend Response** (`./frontend/public/backend-response.png`)
+### 📊 Main Chart Page  
+![Home](./frontend/public/home.png)  
+
+### ⚙️ Modal with Alert Configurations  
+![Modal](./frontend/public/modal.png)  
+
+### 🔥 Flask Backend Response  
+![Backend Response](./frontend/public/backend-response.png)  
+
+## ✨ Author  
+👤 **Rehan Sayyed**  
+- GitHub: [rsayyed591](https://github.com/rsayyed591)
+- LinkedIn: [rehan42](https://www.linkedin.com/in/rehan42/)
