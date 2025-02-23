@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useRef, useState, useCallback } from "react"
 import { format } from "date-fns"
 import { throttle } from "lodash"
@@ -10,7 +8,6 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
   const [trendlines, setTrendlines] = useState([])
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, xValue: null, yValue: null })
   const [crosshairPosition, setCrosshairPosition] = useState({ x: 0, y: 0 })
-  const [hoveredLine, setHoveredLine] = useState(null)
 
   const svgRef = useRef(null)
   const drawingRef = useRef({ start: null, end: null })

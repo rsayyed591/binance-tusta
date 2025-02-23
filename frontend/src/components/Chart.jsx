@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, useRef } from "react"
 import ReactApexChart from "react-apexcharts"
 import Trendline from "./Trendline"
@@ -13,7 +11,6 @@ const Chart = () => {
   const [isLoading, setIsLoading] = useState(true)
   const chartRef = useRef(null)
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
