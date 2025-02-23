@@ -68,19 +68,30 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
 
   const handleMouseMove = useCallback(
     throttle((event) => {
-      const coords = getChartCoordinates(event.clientX, event.clientY)
+      if (!svgRef.current) return;
+      
+      const rect = svgRef.current.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left; // Correct X
+      const mouseY = event.clientY - rect.top;  // Correct Y
+  
+      // Set crosshair to follow cursor
+      setCrosshairPosition({ x: mouseX, y: mouseY });
+  
+      // Ensure chart coordinates are in sync
+      const coords = getChartCoordinates(mouseX, mouseY);
       if (coords) {
-        setMousePosition(coords)
-        setCrosshairPosition({ x: coords.x, y: coords.y })
+        setMousePosition(coords); // For any chart-specific logic
         if (isDrawing && drawingRef.current.start) {
-          drawingRef.current.end = coords
-          updateDrawingLine()
+          drawingRef.current.end = { x: mouseX, y: mouseY }; // Sync drawing lines with mouse
+          updateDrawingLine();
         }
       }
     }, 16),
-    [getChartCoordinates, isDrawing],
-  )
-
+    [getChartCoordinates, isDrawing]
+  );
+  
+    
+  
   const updateDrawingLine = () => {
     const svg = svgRef.current
     if (!svg || !drawingRef.current.start) return
@@ -104,15 +115,18 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
   const handleMouseDown = useCallback(
     (event) => {
       if (event.button !== 0) return // Only left click
-
-      const coords = getChartCoordinates(event.clientX, event.clientY)
-      if (coords) {
-        setIsDrawing(true)
-        drawingRef.current.start = coords
+  
+      setIsDrawing(true)
+      drawingRef.current.start = {
+        x: crosshairPosition.x,
+        y: crosshairPosition.y,
+        xValue: mousePosition.xValue,
+        yValue: mousePosition.yValue,
       }
     },
-    [getChartCoordinates],
+    [crosshairPosition, mousePosition],
   )
+  
 
   const handleMouseUp = useCallback(() => {
     if (!isDrawing || !drawingRef.current.start || !drawingRef.current.end) {
@@ -175,25 +189,26 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
         {crosshairPosition && (
           <>
             <line
-              x1={0}
-              y1={crosshairPosition.y}
-              x2="100%"
-              y2={crosshairPosition.y}
-              stroke="#888"
-              strokeWidth="1"
-              strokeDasharray="5,5"
-              className="crosshair-line"
-            />
-            <line
-              x1={crosshairPosition.x}
-              y1={0}
-              x2={crosshairPosition.x}
-              y2="100%"
-              stroke="#888"
-              strokeWidth="1"
-              strokeDasharray="5,5"
-              className="crosshair-line"
-            />
+  x1={0}
+  y1={crosshairPosition.y}
+  x2={svgRef.current?.clientWidth || 0}
+  y2={crosshairPosition.y}
+  stroke="#888"
+  strokeWidth="1"
+  strokeDasharray="5,5"
+  className="crosshair-line"
+/>
+<line
+  x1={crosshairPosition.x}
+  y1={0}
+  x2={crosshairPosition.x}
+  y2={svgRef.current?.clientHeight || 0}
+  stroke="#888"
+  strokeWidth="1"
+  strokeDasharray="5,5"
+  className="crosshair-line"
+/>
+
           </>
         )}
         {trendlines.map((trendline) => (
