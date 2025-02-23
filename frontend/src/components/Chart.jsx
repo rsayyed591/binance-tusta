@@ -1,12 +1,16 @@
+"use client"
+
 import { useEffect, useState, useRef } from "react"
 import ReactApexChart from "react-apexcharts"
 import Trendline from "./Trendline"
 import AlertModal from "./Modal"
+import { Loader2 } from 'lucide-react'
 
 const Chart = () => {
   const [series, setSeries] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [selectedTrendline, setSelectedTrendline] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
   const chartRef = useRef(null)
 
   // Fetch data
@@ -21,6 +25,7 @@ const Chart = () => {
           y: [Number.parseFloat(d[1]), Number.parseFloat(d[2]), Number.parseFloat(d[3]), Number.parseFloat(d[4])],
         }))
         setSeries(formattedData)
+        setIsLoading(false)
       } catch (error) {
         console.error("Error fetching data:", error)
         setTimeout(fetchData, 10000)
@@ -53,6 +58,11 @@ const Chart = () => {
     xaxis: {
       type: "datetime",
       labels: {
+        show: true,
+        formatter: (value) => {
+          const date = new Date(value)
+          return `${date.getDate()} ${date.toLocaleString("en-US", { month: "short" })}`
+        },
         style: {
           colors: "#EAECEF",
           fontFamily: "JetBrains Mono",
@@ -108,11 +118,21 @@ const Chart = () => {
     setShowModal(true)
   }
 
+  if (isLoading) {
+    return (
+      <div className="h-[calc(100vh-12rem)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-white/80">Loading chart data...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative h-[calc(100vh-12rem)]">
       <div className="h-full" ref={chartRef}>
         <ReactApexChart options={chartOptions} series={[{ data: series }]} type="candlestick" height="100%" />
-
         <Trendline chartRef={chartRef} series={series} onTrendlineSelect={handleTrendlineSelect} />
       </div>
 
@@ -124,4 +144,3 @@ const Chart = () => {
 }
 
 export default Chart
-

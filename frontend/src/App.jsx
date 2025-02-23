@@ -9,6 +9,9 @@ function App() {
           <Chart />
         </div>
       </div>
+      <footer className="text-right text-white/70 text-sm py-4 pr-12">
+        Built by <a href="https://github.com/rsayyed591" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Rehan Sayyed</a>
+      </footer>
     </div>
   )
 }

@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useRef, useState, useCallback } from "react"
 import { format } from "date-fns"
 import { throttle } from "lodash"
@@ -8,6 +10,7 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
   const [trendlines, setTrendlines] = useState([])
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, xValue: null, yValue: null })
   const [crosshairPosition, setCrosshairPosition] = useState({ x: 0, y: 0 })
+  const [hoveredLine, setHoveredLine] = useState(null)
 
   const svgRef = useRef(null)
   const drawingRef = useRef({ start: null, end: null })
@@ -68,30 +71,26 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
 
   const handleMouseMove = useCallback(
     throttle((event) => {
-      if (!svgRef.current) return;
-      
-      const rect = svgRef.current.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left; // Correct X
-      const mouseY = event.clientY - rect.top;  // Correct Y
-  
-      // Set crosshair to follow cursor
-      setCrosshairPosition({ x: mouseX, y: mouseY });
-  
-      // Ensure chart coordinates are in sync
-      const coords = getChartCoordinates(mouseX, mouseY);
+      if (!svgRef.current) return
+
+      const rect = svgRef.current.getBoundingClientRect()
+      const mouseX = event.clientX - rect.left
+      const mouseY = event.clientY - rect.top
+
+      setCrosshairPosition({ x: mouseX, y: mouseY })
+
+      const coords = getChartCoordinates(event.clientX, event.clientY)
       if (coords) {
-        setMousePosition(coords); // For any chart-specific logic
+        setMousePosition(coords)
         if (isDrawing && drawingRef.current.start) {
-          drawingRef.current.end = { x: mouseX, y: mouseY }; // Sync drawing lines with mouse
-          updateDrawingLine();
+          drawingRef.current.end = { x: mouseX, y: mouseY }
+          updateDrawingLine()
         }
       }
     }, 16),
-    [getChartCoordinates, isDrawing]
-  );
-  
-    
-  
+    [getChartCoordinates, isDrawing],
+  )
+
   const updateDrawingLine = () => {
     const svg = svgRef.current
     if (!svg || !drawingRef.current.start) return
@@ -114,8 +113,8 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
 
   const handleMouseDown = useCallback(
     (event) => {
-      if (event.button !== 0) return // Only left click
-  
+      if (event.button !== 0) return
+
       setIsDrawing(true)
       drawingRef.current.start = {
         x: crosshairPosition.x,
@@ -126,7 +125,6 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
     },
     [crosshairPosition, mousePosition],
   )
-  
 
   const handleMouseUp = useCallback(() => {
     if (!isDrawing || !drawingRef.current.start || !drawingRef.current.end) {
@@ -167,17 +165,39 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
 
   return (
     <>
-      <div
-        className="absolute pointer-events-none bg-blue-500 text-white px-2 py-1 rounded text-xs"
-        style={{
-          display: isDrawing ? "block" : "none",
-          left: mousePosition.x + 16,
-          top: mousePosition.y + 16,
-        }}
-      >
-        {`${format(mousePosition.xValue || new Date(), "HH:mm:ss")}, ${mousePosition.yValue?.toFixed(2) || 0}`}
-      </div>
+      {/* Price values following crosshair */}
+      {mousePosition.yValue && (
+        <>
+          {/* Y-axis value (left side) */}
+          <div
+            className="absolute bg-black text-white text-sm px-2 py-1 rounded flex items-center gap-1 pointer-events-none"
+            style={{
+              left: 8,
+              top: crosshairPosition.y - 12,
+              zIndex: 50,
+              transform: "translateY(-50%)",
+            }}
+          >
+            <span className="text-lg">+</span>
+            {mousePosition.yValue.toFixed(2)}
+          </div>
 
+          {/* X-axis value (bottom) */}
+          <div
+            className="absolute bg-black text-white text-sm px-2 py-1 rounded pointer-events-none"
+            style={{
+              left: crosshairPosition.x,
+              bottom: 8,
+              zIndex: 50,
+              transform: "translateX(-50%)",
+            }}
+          >
+            {format(mousePosition.xValue, "dd MMM")}
+          </div>
+        </>
+      )}
+
+      {/* Keep the rest of the component unchanged */}
       <svg
         ref={svgRef}
         className="absolute inset-0 w-full h-full"
@@ -189,28 +209,26 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
         {crosshairPosition && (
           <>
             <line
-  x1={0}
-  y1={crosshairPosition.y}
-  x2={svgRef.current?.clientWidth || 0}
-  y2={crosshairPosition.y}
-  stroke="#888"
-  strokeWidth="1"
-  strokeDasharray="5,5"
-  className="crosshair-line"
-/>
-<line
-  x1={crosshairPosition.x}
-  y1={0}
-  x2={crosshairPosition.x}
-  y2={svgRef.current?.clientHeight || 0}
-  stroke="#888"
-  strokeWidth="1"
-  strokeDasharray="5,5"
-  className="crosshair-line"
-/>
-
+              x1={0}
+              y1={crosshairPosition.y}
+              x2="100%"
+              y2={crosshairPosition.y}
+              stroke="#888"
+              strokeWidth="1"
+              strokeDasharray="5,5"
+            />
+            <line
+              x1={crosshairPosition.x}
+              y1={0}
+              x2={crosshairPosition.x}
+              y2="100%"
+              stroke="#888"
+              strokeWidth="1"
+              strokeDasharray="5,5"
+            />
           </>
         )}
+
         {trendlines.map((trendline) => (
           <g key={trendline.id} onContextMenu={(e) => handleTrendlineRightClick(e, trendline)}>
             <line
@@ -228,6 +246,7 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
               y2={trendline.end.y}
               stroke="transparent"
               strokeWidth="10"
+              style={{ cursor: "context-menu" }}
             />
           </g>
         ))}
