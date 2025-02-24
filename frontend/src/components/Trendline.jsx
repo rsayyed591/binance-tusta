@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useRef, useState, useCallback } from "react"
 import { format } from "date-fns"
 import { throttle } from "lodash"
@@ -8,6 +10,7 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
   const [trendlines, setTrendlines] = useState([])
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, xValue: null, yValue: null })
   const [crosshairPosition, setCrosshairPosition] = useState({ x: 0, y: 0 })
+  const [hoveredLine, setHoveredLine] = useState(null)
 
   const svgRef = useRef(null)
   const drawingRef = useRef({ start: null, end: null })
@@ -42,6 +45,21 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
 
     return () => window.removeEventListener("resize", updateBounds)
   }, [chartRef])
+
+  // Add useEffect to handle text selection
+  useEffect(() => {
+    const handleSelectStart = (e) => {
+      if (isDrawing) {
+        e.preventDefault()
+      }
+    }
+
+    document.addEventListener("selectstart", handleSelectStart)
+    return () => document.removeEventListener("selectstart", handleSelectStart)
+  }, [isDrawing])
+
+  // Add check for mobile devices
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
 
   const getChartCoordinates = useCallback(
     (clientX, clientY) => {
@@ -88,7 +106,7 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
     [getChartCoordinates, isDrawing],
   )
 
-  const updateDrawingLine = () => {
+  const updateDrawingLine = useCallback(() => {
     const svg = svgRef.current
     if (!svg || !drawingRef.current.start) return
 
@@ -106,11 +124,11 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
     line.setAttribute("y2", (end?.y || start.y).toString())
     line.setAttribute("stroke", "#1B9CFC")
     line.setAttribute("stroke-width", "2")
-  }
+  }, [])
 
   const handleMouseDown = useCallback(
     (event) => {
-      if (event.button !== 0) return
+      if (event.button !== 0 || isMobile) return
 
       setIsDrawing(true)
       drawingRef.current.start = {
@@ -120,7 +138,7 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
         yValue: mousePosition.yValue,
       }
     },
-    [crosshairPosition, mousePosition],
+    [crosshairPosition, mousePosition, isMobile],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -197,7 +215,7 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
       {/* Keep the rest of the component unchanged */}
       <svg
         ref={svgRef}
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full select-none"
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -249,7 +267,8 @@ const Trendline = ({ chartRef, series, onTrendlineSelect }) => {
         ))}
       </svg>
 
-      {!isDrawing && trendlines.length === 0 && (
+      {/* Update the instruction message to not show on mobile */}
+      {!isDrawing && trendlines.length === 0 && !isMobile && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded">
           Click and drag to draw a trendline
         </div>
